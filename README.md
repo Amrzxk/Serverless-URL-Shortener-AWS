@@ -10,4 +10,4 @@ Fully serverless URL shortener that lives entirely in the AWS always-free tier, 
 - Week 2 – infrastructure code (SAM / CloudFormation)
 - Week 3 – CI/CD hardening
 - Week 4 – observability & alarms
-- Week 5 – UI polish + demo assets
+- Week 5 – UI polish + demo assets # trigger
