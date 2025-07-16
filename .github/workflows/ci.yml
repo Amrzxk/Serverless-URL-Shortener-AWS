@@ -1,7 +1,8 @@
 name: CI placeholder
 on: [push]
 jobs:
-  noop:
+  ci-check:
+    name: CI placeholder
     runs-on: ubuntu-latest
     steps:
       - run: echo "Week-2 will replace this job"
