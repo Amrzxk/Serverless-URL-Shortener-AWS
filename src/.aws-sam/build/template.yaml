@@ -1,46 +1,181 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: 'src
-
-  Sample SAM Template for src
-
-  '
+Parameters:
+  AlertEmail:
+    Type: String
+    Description: Email address to receive cost and error alerts
+    Default: amrzakariya2018@gmail.com
 Globals:
   Function:
-    Timeout: 3
-    LoggingConfig:
-      LogFormat: JSON
+    Runtime: python3.13
+    Timeout: 5
+    MemorySize: 128
+    Environment:
+      Variables:
+        TABLE_NAME:
+          Ref: UrlTable
 Resources:
-  HelloWorldFunction:
+  CostAlertsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName:
+        Fn::Sub: ${AWS::StackName}-cost-alerts
+      DisplayName: URL Shortener Cost Alerts
+  CostAlertsSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: email
+      TopicArn:
+        Ref: CostAlertsTopic
+      Endpoint:
+        Ref: AlertEmail
+  CostBudget:
+    Type: AWS::Budgets::Budget
+    Properties:
+      Budget:
+        BudgetName:
+          Fn::Sub: ${AWS::StackName}-monthly-budget
+        BudgetLimit:
+          Amount: 5.0
+          Unit: USD
+        TimeUnit: MONTHLY
+        BudgetType: COST
+      NotificationsWithSubscribers:
+      - Notification:
+          NotificationType: ACTUAL
+          ComparisonOperator: GREATER_THAN
+          Threshold: 100
+        Subscribers:
+        - SubscriptionType: SNS
+          Address:
+            Ref: CostAlertsTopic
+  CreateSlugErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName:
+        Fn::Sub: ${AWS::StackName}-CreateSlug-Errors
+      AlarmDescription: Alert when CreateSlug function has errors
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: FunctionName
+        Value:
+          Ref: CreateSlugFunction
+      AlarmActions:
+      - Ref: CostAlertsTopic
+  RedirectErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName:
+        Fn::Sub: ${AWS::StackName}-Redirect-Errors
+      AlarmDescription: Alert when Redirect function has errors
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: FunctionName
+        Value:
+          Ref: RedirectFunction
+      AlarmActions:
+      - Ref: CostAlertsTopic
+  ApiGateway5XXAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName:
+        Fn::Sub: ${AWS::StackName}-API-5XX-Errors
+      AlarmDescription: Alert when API has 5XX error rate > 1%
+      MetricName: 5XXError
+      Namespace: AWS/ApiGateway
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 5
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+      - Name: ApiName
+        Value:
+          Ref: HttpApi
+      AlarmActions:
+      - Ref: CostAlertsTopic
+  UrlTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      PrimaryKey:
+        Name: slug
+        Type: String
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+  HttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      Name: UrlShortenerApi
+      CorsConfiguration:
+        AllowOrigins:
+        - '*'
+        AllowMethods:
+        - GET
+        - POST
+        - OPTIONS
+  CreateSlugFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: HelloWorldFunction
+      CodeUri: CreateSlugFunction
       Handler: app.lambda_handler
-      Runtime: python3.13
-      Architectures:
-      - x86_64
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: UrlTable
       Events:
-        HelloWorld:
-          Type: Api
+        ApiPost:
+          Type: HttpApi
           Properties:
-            Path: /hello
-            Method: get
+            ApiId:
+              Ref: HttpApi
+            Path: /api/slug
+            Method: POST
+            PayloadFormatVersion: '2.0'
     Metadata:
-      SamResourceId: HelloWorldFunction
+      SamResourceId: CreateSlugFunction
+  RedirectFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: RedirectFunction
+      Handler: app.lambda_handler
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName:
+            Ref: UrlTable
+      Events:
+        ApiGet:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: HttpApi
+            Path: /{slug}
+            Method: GET
+            PayloadFormatVersion: '2.0'
+    Metadata:
+      SamResourceId: RedirectFunction
 Outputs:
-  HelloWorldApi:
-    Description: API Gateway endpoint URL for Prod stage for Hello World function
+  ApiUrl:
+    Description: HTTP API base URL
     Value:
-      Fn::Sub: https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/
-  HelloWorldFunction:
-    Description: Hello World Lambda Function ARN
+      Fn::Sub: https://${HttpApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}
+  CostAlertsTopic:
+    Description: SNS Topic for cost and error alerts
     Value:
-      Fn::GetAtt:
-      - HelloWorldFunction
-      - Arn
-  HelloWorldFunctionIamRole:
-    Description: Implicit IAM Role created for Hello World function
+      Ref: CostAlertsTopic
+  BudgetName:
+    Description: AWS Budget monitoring monthly costs
     Value:
-      Fn::GetAtt:
-      - HelloWorldFunctionRole
-      - Arn
+      Fn::Sub: ${AWS::StackName}-monthly-budget

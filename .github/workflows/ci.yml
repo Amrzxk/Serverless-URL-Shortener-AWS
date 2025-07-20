@@ -19,15 +19,15 @@ jobs:
         with:
           python-version: '3.13.x'
 
+      - name: Install test dependencies
+        run: pip install --quiet pytest
+
       - name: Install SAM CLI
         run: pip install --no-cache-dir aws-sam-cli
 
       - name: Install project dependencies (requirements.txt if present)
         run: |
           if [ -f src/requirements.txt ]; then pip install -r src/requirements.txt; fi
-
-      - name: Install test dependencies
-        run: pip install --quiet pytest
 
       - name: Build with SAM
         working-directory: src
@@ -42,3 +42,46 @@ jobs:
       - name: Validate SAM template
         working-directory: src
         run: sam validate
+
+  deploy:
+    name: Deploy to AWS
+    runs-on: ubuntu-latest
+    needs: ci-check
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      id-token: write   # Required for OIDC
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13.x'
+
+      - name: Install SAM CLI
+        run: pip install --no-cache-dir aws-sam-cli
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Build with SAM
+        working-directory: src
+        run: sam build --cached
+
+      - name: Deploy to AWS
+        working-directory: src
+        run: sam deploy --no-confirm-changeset --no-fail-on-empty-changeset
+
+      - name: Get API URL
+        working-directory: src
+        run: |
+          API_URL=$(aws cloudformation describe-stacks \
+            --stack-name url-shortener-dev \
+            --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" \
+            --output text)
+          echo "🚀 Deployed! API URL: $API_URL"
