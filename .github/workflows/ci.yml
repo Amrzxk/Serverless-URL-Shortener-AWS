@@ -1,8 +1,39 @@
-name: CI placeholder
-on: [push]
+name: CI
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
 jobs:
   ci-check:
-    name: CI placeholder
+    name: Build & Test
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Week-2 will replace this job"
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install SAM CLI
+        run: pip install --no-cache-dir aws-sam-cli
+
+      - name: Install project dependencies (requirements.txt if present)
+        run: |
+          if [ -f src/requirements.txt ]; then pip install -r src/requirements.txt; fi
+
+      - name: Build with SAM
+        working-directory: src
+        run: sam build --cached
+
+      - name: Run unit tests
+        working-directory: src
+        run: pytest --quiet
+
+      - name: Validate SAM template
+        working-directory: src
+        run: sam validate
