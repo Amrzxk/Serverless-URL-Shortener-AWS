@@ -26,6 +26,9 @@ jobs:
         run: |
           if [ -f src/requirements.txt ]; then pip install -r src/requirements.txt; fi
 
+      - name: Install test dependencies
+        run: pip install --quiet pytest
+
       - name: Build with SAM
         working-directory: src
         run: sam build --cached
