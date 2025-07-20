@@ -1,0 +1,75 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Globals:
+  Function:
+    Runtime: python3.13
+    Timeout: 5
+    MemorySize: 128
+    Environment:
+      variables:
+        TABLE_NAME:
+          Ref: UrlTable
+Resources:
+  UrlTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      PrimaryKey:
+        Name: slug
+        Type: String
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+  HttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      Name: UrlShortenerApi
+      CorsConfiguration:
+        AllowOrigins:
+        - '*'
+        AllowMethods:
+        - GET
+        - POST
+        - OPTIONS
+  CreateSlugFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: CreateSlugFunction
+      Handler: app.lambda_handler
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: UrlTable
+      Events:
+        ApiPost:
+          type: HttpApi
+          Properties:
+            ApiId:
+              Ref: HttpApi
+            Path: /api/slug
+            Method: POST
+    Metadata:
+      SamResourceId: CreateSlugFunction
+  RedirectFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: RedirectFunction
+      Handler: app.lambda_handler
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName:
+            Ref: UrlTable
+      Events:
+        ApiGet:
+          type: HttpApi
+          Properties:
+            ApiId:
+              Ref: HttpApi
+            Path: /{slug}
+            Method: GET
+    Metadata:
+      SamResourceId: RedirectFunction
+Outputs:
+  ApiUrl:
+    Description: HTTP API base URL
+    value:
+      Fn::Sub: https://${HttpApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}
