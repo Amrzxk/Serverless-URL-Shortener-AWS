@@ -35,7 +35,9 @@ jobs:
 
       - name: Run unit tests
         working-directory: src
-        run: pytest --quiet
+        env:
+          PYTHONPATH: "${{ github.workspace }}/src"
+        run: python -m pytest --quiet
 
       - name: Validate SAM template
         working-directory: src
