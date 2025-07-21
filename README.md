@@ -119,8 +119,6 @@ Serverless-URL-Shortener-AWS/
 │   └── samconfig.toml         # SAM deployment configuration
 ├── docs/                      # Documentation and diagrams
 │   ├── architecture.png       # System architecture diagram
-│   ├── design-decisions.md    # Technical decision records
-│   └── runbook.md            # Operational procedures
 └── README.md                 # This file
 ```
 
