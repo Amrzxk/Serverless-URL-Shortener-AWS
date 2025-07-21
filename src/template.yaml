@@ -131,6 +131,7 @@ Resources:
       CorsConfiguration:
         AllowOrigins: ["*"]
         AllowMethods: ["GET", "POST", "OPTIONS"]
+        AllowHeaders: ["content-type"]
   # Create Lambda Function (POST /api/slug)
   CreateSlugFunction:
     Type: AWS::Serverless::Function
