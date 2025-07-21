@@ -172,7 +172,9 @@ Resources:
     Properties:
       WebsiteConfiguration:
         IndexDocument: index.html
-      AccessControl: PublicRead
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerPreferred
       PublicAccessBlockConfiguration:
         BlockPublicAcls: false
         BlockPublicPolicy: false
