@@ -11,6 +11,8 @@ This application demonstrates modern serverless architecture patterns:
 - **DynamoDB** - NoSQL database storing slug-to-URL mappings
 - **CloudWatch** - Monitoring, logging, and alerting
 - **SNS** - Cost and error notifications
+- **S3 Static Website** – Hosts the React-less vanilla HTML interface
+- **CloudFront CDN** – Global edge caching for the static site
 - **GitHub Actions** - Automated CI/CD pipeline with OIDC authentication
 
 ![Architecture](docs/architecture.png)
@@ -30,6 +32,7 @@ This application demonstrates modern serverless architecture patterns:
 - **OIDC Authentication** - Secure AWS access without storing credentials
 - **Cost Monitoring** - AWS Budget alerts when spending exceeds $5/month
 - **Error Monitoring** - CloudWatch alarms for Lambda errors and API 5XX responses
+- **Static Frontend Deployment** – CI syncs `frontend/` to S3 and automatically invalidates CloudFront
 
 ### ✅ **Developer Experience**
 - **Local Development** - SAM CLI for local testing and debugging
@@ -45,6 +48,8 @@ This application demonstrates modern serverless architecture patterns:
 | **API** | API Gateway HTTP API | 1M calls/month |
 | **Database** | DynamoDB On-Demand | 25GB storage |
 | **Storage** | S3 (deployment artifacts) | 5GB storage |
+| **Frontend** | S3 Static Website | 5GB storage |
+| **CDN** | CloudFront | 1 TB data out |
 | **Monitoring** | CloudWatch | 10 custom metrics |
 | **CI/CD** | GitHub Actions | Unlimited minutes (public repos) |
 | **Infrastructure** | AWS SAM + CloudFormation | Free |
