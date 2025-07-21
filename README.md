@@ -263,10 +263,6 @@ aws iam get-role --role-name GitHubActions-Deploy-Role
 6. **Push to the branch** (`git push origin feature/amazing-feature`)
 7. **Open a Pull Request**
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## 🙏 Acknowledgments
 
 - **AWS SAM** - Serverless Application Model framework
