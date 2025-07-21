@@ -94,3 +94,8 @@ jobs:
       - name: Sync frontend to S3
         run: |
           aws s3 sync frontend/ s3://$SITE_BUCKET --delete
+
+      - name: Invalidate CloudFront cache
+        if: env.SITE_DIST_ID != ''
+        run: |
+          aws cloudfront create-invalidation --distribution-id $SITE_DIST_ID --paths "/*"
