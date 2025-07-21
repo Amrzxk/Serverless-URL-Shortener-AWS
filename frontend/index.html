@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Serverless URL Shortener</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: 60px auto; }
+    h1 { text-align: center; }
+    input[type="text"] { width: 100%; padding: 10px; margin: 10px 0; }
+    button { padding: 10px 20px; }
+    #result { margin-top: 20px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Serverless URL Shortener</h1>
+  <p>Enter a long URL and get a short one instantly.</p>
+  <input id="longUrl" type="text" placeholder="https://example.com/very/long/url" />
+  <button onclick="createSlug()">Shorten URL</button>
+  <div id="result"></div>
+
+  <script>
+    // Placeholder - the CI/CD pipeline replaces this with the actual API URL at deploy time
+    const API_BASE = "__API_BASE_URL__";
+
+    async function createSlug() {
+      const longUrl = document.getElementById('longUrl').value;
+      if (!longUrl) { alert('Please enter a URL'); return; }
+
+      const res = await fetch(`${API_BASE}/api/slug`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: longUrl })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        document.getElementById('result').innerHTML =
+          `Short URL: <a href="${data.short_url}" target="_blank">${data.short_url}</a>`;
+      } else {
+        const text = await res.text();
+        alert(`Error: ${text}`);
+      }
+    }
+  </script>
+</body>
+</html> 
