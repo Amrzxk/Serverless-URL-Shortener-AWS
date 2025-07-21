@@ -77,7 +77,7 @@ jobs:
         working-directory: src
         env:
           AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
-        run: sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --region ${{ secrets.AWS_REGION }}
+        run: sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --region ${{ secrets.AWS_REGION }} --config-env pipeline
 
       - name: Get API URL
         working-directory: src

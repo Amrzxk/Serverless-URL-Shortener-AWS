@@ -33,3 +33,12 @@ warm_containers = "EAGER"
 
 [default.local_start_lambda.parameters]
 warm_containers = "EAGER"
+
+[pipeline.deploy.parameters]
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = true
+resolve_s3 = true
+stack_name = "url-shortener-dev"
+s3_prefix = "url-shortener-dev"
+region = "us-east-1"
+image_repositories = []
