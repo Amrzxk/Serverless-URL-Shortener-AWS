@@ -238,3 +238,7 @@ Outputs:
   BudgetName:
     Description: AWS Budget monitoring monthly costs
     Value: !Sub "${AWS::StackName}-monthly-budget"
+
+  SiteDistributionId:
+    Description: CloudFront Distribution ID
+    Value: !Ref SiteDistribution
