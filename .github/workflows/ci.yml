@@ -82,8 +82,15 @@ jobs:
       - name: Get API URL
         working-directory: src
         run: |
-          API_URL=$(aws cloudformation describe-stacks \
-            --stack-name url-shortener-dev \
-            --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" \
-            --output text)
-          echo "🚀 Deployed! API URL: $API_URL"
+          API_URL=$(aws cloudformation describe-stacks --stack-name url-shortener-dev --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" --output text)
+          SITE_BUCKET=$(aws cloudformation describe-stacks --stack-name url-shortener-dev --query "Stacks[0].Outputs[?OutputKey=='SiteBucketName'].OutputValue" --output text)
+          echo "API_URL=$API_URL" >> $GITHUB_ENV
+          echo "SITE_BUCKET=$SITE_BUCKET" >> $GITHUB_ENV
+
+      - name: Prepare frontend
+        run: |
+          sed -i "s|__API_BASE_URL__|$API_URL|g" frontend/index.html
+
+      - name: Sync frontend to S3
+        run: |
+          aws s3 sync frontend/ s3://$SITE_BUCKET --delete
